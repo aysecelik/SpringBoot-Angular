@@ -1,0 +1,45 @@
+eduser01@education01:~$ docker ps
+CONTAINER ID   IMAGE                   COMMAND                  CREATED       STATUS                 PORTS                                            NAMES
+18b77dc881f2   dpage/pgadmin4:4.14     "/entrypoint.sh"         3 hours ago   Up 3 hours             443/tcp, 0.0.0.0:5050->80/tcp, :::5050->80/tcp   pgadmin
+c31d8a17f9e4   citusdata/citus:9.5.0   "docker-entrypoint.s…"   3 hours ago   Up 3 hours (healthy)   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp        pg_master
+eduser01@education01:~$ ls
+Desktop  docker-ed  dockerbackend
+eduser01@education01:~$ cd dockerbackend/
+eduser01@education01:~/dockerbackend$ cat docker-compose.yml
+version: '3.8'
+
+services:
+  pg-master:
+    container_name: "pg_master"
+    image: 'citusdata/citus:9.5.0'
+    ports: [ "5432:5432" ]
+    labels: [ 'com.citusdata.role=Master' ]
+    volumes:
+      - pg-master-volume:/var/lib/postgresql/data
+    environment: &AUTH
+      POSTGRES_USER: "datacube"
+      POSTGRES_PASSWORD: "datacube"
+      PGUSER: "datacube"
+      PGPASSWORD: "datacube"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+      CITUS_HOST: "pg-master"
+
+
+  pgadmin:
+    image: dpage/pgadmin4:4.14
+    container_name: pgadmin
+    depends_on:
+      - pg-master
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-volume:/root/.pgadmin
+
+volumes:
+  pg-master-volume:
+  pgadmin-volume:
+eduser01@education01:~/dockerbackend$
+
